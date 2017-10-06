@@ -12,14 +12,15 @@ TARFLAGS = -C .. --ignore-failed-read -rvf
 RM = rm -f
 MV = mv
 
-#COMMON_FLAGS = -m32
+ENV_LDFLAGS := $(LDFLAGS)
+ENV_CFLAGS := $(CFLAGS)
 VPATH = ../common ../zlib ../uart
 OBJDIR = obj
 
 LDLIBS = -L/opt/local/lib -L/usr/local/lib -lreadline -lpthread -lm
 LUALIB = ../liblua/liblua.a
-LDFLAGS = $(COMMON_FLAGS)
-CFLAGS = -std=c99 -D_ISOC99_SOURCE -I. -I../include -I../common -I../zlib -I../uart -I/opt/local/include -I../liblua -Wall $(COMMON_FLAGS) -g -O3
+LDFLAGS = $(ENV_LDFLAGS)
+CFLAGS = $(ENV_CFLAGS) -std=c99 -D_ISOC99_SOURCE -I. -I../include -I../common -I../zlib -I../uart -I/opt/local/include -I../liblua -Wall -g -O3
 CXXFLAGS = -I../include -Wall -O3
 
 LUAPLATFORM = generic
@@ -172,14 +173,21 @@ MULTIARCHOBJS = $(MULTIARCHSRCS:%.c=$(OBJDIR)/%_NOSIMD.o) \
 			$(MULTIARCHSRCS:%.c=$(OBJDIR)/%_AVX.o) \
 			$(MULTIARCHSRCS:%.c=$(OBJDIR)/%_AVX2.o)
 
-GCC_GTEQ_490 := $(shell expr `gcc --version | awk '/gcc/{print $$NF;}' | sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/'` \>= 40900)
+GCC_VERSION := $(shell gcc --version | awk '/gcc/{print $$NF;}' | sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/')
+CLANG_VERSION := $(shell gcc --version | awk '/Apple LLVM version/{print $$4;}' | sed -e 's/\.\([0-9][0-9]\)/\1/g' -e 's/\.\([0-9]\)/0\1/g' -e 's/^[0-9]\{3,4\}$$/&00/')
+ifneq ($(CLANG_VERSION), )
+	SUPPORTS_AVX512 :=  $(shell [ $(CLANG_VERSION) -ge 80000 ] && echo "True" )
+endif
+ifneq ($(GCC_VERSION), )
+	SUPPORTS_AVX512 :=  $(shell [ $(GCC_VERSION) -ge 40900 ] && echo "True" )
+endif
 HARD_SWITCH_NOSIMD = -mno-mmx -mno-sse2 -mno-avx -mno-avx2
 HARD_SWITCH_MMX = -mmmx -mno-sse2 -mno-avx -mno-avx2
 HARD_SWITCH_SSE2 = -mmmx -msse2 -mno-avx -mno-avx2
 HARD_SWITCH_AVX = -mmmx -msse2 -mavx -mno-avx2
 HARD_SWITCH_AVX2 = -mmmx -msse2 -mavx -mavx2
 HARD_SWITCH_AVX512 = -mmmx -msse2 -mavx -mavx2 -mavx512f
-ifeq "$(GCC_GTEQ_490)" "1"
+ifeq "$(SUPPORTS_AVX512)" "True"
 	HARD_SWITCH_NOSIMD += -mno-avx512f
 	HARD_SWITCH_MMX += -mno-avx512f
 	HARD_SWITCH_SSE2 += -mno-avx512f
