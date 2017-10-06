@@ -19,6 +19,7 @@ void HideGraphWindow(void);
 void ShowGraphWindow(void);
 void RepaintGraphWindow(void);
 void PrintAndLog(char *fmt, ...);
+void PrintAndLogRaw(char *fmt, ...);
 void SetLogFilename(char *fn);
 
 extern double CursorScaleFactor;

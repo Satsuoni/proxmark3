@@ -197,5 +197,7 @@ bool cmd_send(uint32_t cmd, uint32_t arg0, uint32_t arg1, uint32_t arg2, void* d
 
 /// util.h
 void HfSnoop(int , int);
+void HfSnoopLite(int, int);
+void HfSimLite(unsigned int,unsigned int);
 
 #endif

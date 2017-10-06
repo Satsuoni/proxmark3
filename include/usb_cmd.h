@@ -210,6 +210,14 @@ typedef struct{
 
 #define CMD_HF_SNIFFER                                                    0x0800
 
+
+//FELICA LITE_s
+
+#define CMD_SNOOP_FLITE                                                   0x0820
+#define CMD_SIM_FLITE                                                   0x0821
+
+
+
 #define CMD_UNKNOWN                                                       0xFFFF
 
 

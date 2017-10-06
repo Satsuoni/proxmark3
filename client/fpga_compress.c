@@ -297,11 +297,15 @@ int main(int argc, char **argv)
 		}
 		infiles = calloc(num_input_files, sizeof(FILE*));
 		for (uint16_t i = 0; i < num_input_files; i++) { 
-			infiles[i] = fopen(argv[i+hardnested_mode?2:1], "rb");
+			infiles[i] = fopen(argv[i+(hardnested_mode?2:1)], "rb");
 			if (infiles[i] == NULL) {
-				fprintf(stderr, "Error. Cannot open input file %s", argv[i+hardnested_mode?2:1]);
+				fprintf(stderr, "Error. Cannot open input file %s", argv[i+(hardnested_mode?2:1)]);
 				return(EXIT_FAILURE);
 			}
+            else
+            {
+                printf("Opening %s %d \n",argv[i+(hardnested_mode?2:1)],(i+hardnested_mode?2:1));
+            }
 		}
 		outfile = fopen(argv[argc-1], "wb");
 		if (outfile == NULL) {

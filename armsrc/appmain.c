@@ -35,6 +35,25 @@
  #include "iso14443a.h"
 #endif
 
+//debug prints seem to stall standalone mode after a while, if there is nothing to receive? i guess silly solution for that problem, if it is not in my head...;
+int doSendDPrint=1;
+
+//PRNG of some kind
+static uint32_t rx=16,ry=33,rz=311156,rc=80085;
+uint32_t rkiss()
+{
+    rx = (uint32_t)( 69069 * rx + 12345 );
+
+    ry ^= (ry << 13);
+    ry ^= (ry >> 17);
+    ry ^= (ry << 5);
+
+    uint64_t rt = 698769069 * rz + rc;
+    rc = (rt >> 32);
+    rz = (uint32_t)(rt);
+
+    return (uint32_t)(rx + ry + rz);
+}
 //=============================================================================
 // A buffer where we can queue things up to be sent through the FPGA, for
 // any purpose (fake tag, as reader, whatever). We go MSB first, since that
@@ -80,6 +99,7 @@ void ToSendStuffBit(int b)
 void DbpString(char *str)
 {
   byte_t len = strlen(str);
+  if(doSendDPrint)
   cmd_send(CMD_DEBUG_PRINT_STRING,len,0,0,(byte_t*)str,len);
 }
 
@@ -315,6 +335,8 @@ void SendVersion(void)
 	strncat(VersionString, temp, sizeof(VersionString) - strlen(VersionString) - 1);
 	FpgaGatherVersion(FPGA_BITSTREAM_HF, temp, sizeof(temp));
 	strncat(VersionString, temp, sizeof(VersionString) - strlen(VersionString) - 1);
+	FpgaGatherVersion(FPGA_BITSTREAM_NFC, temp, sizeof(temp));
+	strncat(VersionString, temp, sizeof(VersionString) - strlen(VersionString) - 1);
 
 	// Send Chip ID and used flash memory
 	uint32_t text_and_rodata_section_size = (uint32_t)&__data_src_start__ - (uint32_t)&_flash_start;
@@ -368,7 +390,7 @@ void SendStatus(void)
 	cmd_send(CMD_ACK,1,0,0,0,0);
 }
 
-#if defined(WITH_ISO14443a_StandAlone) || defined(WITH_LF)
+#if defined(WITH_ISO14443a_StandAlone) || defined(WITH_LF) ||defined(WITH_EM4)
 
 #define OPTS 2
 
@@ -390,7 +412,7 @@ void StandAloneMode()
 
 #endif
 
-
+ 
 
 #ifdef WITH_ISO14443a_StandAlone
 void StandAloneMode14a()
@@ -642,6 +664,63 @@ void StandAloneMode14a()
 		}
 	}
 }
+#elif WITH_EM4
+//Sniff and write routine
+void SatsRun()
+{
+	StandAloneMode();
+    DbpString("Satsu's sniff on");
+	FpgaDownloadAndGo(FPGA_BITSTREAM_LF);
+
+	int highmod=0,lowmod=0;
+    int highnext=0,lownext=0;
+
+
+	for (;;)
+	{
+		usb_poll();
+		WDT_HIT();
+	// Turn on first LED
+    LEDsoff();
+    LED_D_ON();
+    DbpString("Starting recording");
+    CmdEM410xdemod(1, &highmod, &lowmod, 0);
+    
+    LEDsoff();
+    LED_C_ON();
+    highnext=highmod;
+    lownext=lowmod;
+    SpinDelay(500);
+    DbpString("Recorded, waiting for card to write to. ");
+    while (!BUTTON_PRESS()) 
+    {
+		// Watchdog hit
+		WDT_HIT();
+    }
+    while(BUTTON_PRESS())
+		WDT_HIT();
+    
+    //wait for other EM4100 card to be detected
+    CmdEM410xdemod(1, &highnext, &lownext, 0);    
+    
+    LEDsoff();
+    LED_B_ON();
+  
+    int card = 1; 
+	unsigned int clock = 64;
+    card = (card & 0xFF) | ((clock << 8) & 0xFF00); 
+    WriteEM410x( card, highmod, lowmod);
+    SpinDelay(3000);
+    LEDsoff();
+    LED_A_ON();
+    while (!BUTTON_PRESS()) 
+ 		WDT_HIT();
+ 
+    while(BUTTON_PRESS())
+		WDT_HIT();
+		
+	}
+}
 #elif WITH_LF
 // samy's sniff and repeat routine
 void SamyRun()
@@ -773,6 +852,7 @@ void SamyRun()
 		}
 	}
 }
+
 
 #endif
 /*
@@ -1119,6 +1199,14 @@ void UsbPacketReceived(uint8_t *packet, int len)
 			SendRawCommand14443B(c->arg[0],c->arg[1],c->arg[2],c->d.asBytes);
 			break;
 #endif
+#ifdef WITH_EM4
+        case CMD_SIM_FLITE:
+            HfSimLite(c->arg[0],c->arg[1]);            
+            break;                 
+        case CMD_SNOOP_FLITE:
+            HfSnoopLite(c->arg[0],c->arg[1]);
+            break;
+#endif
 
 #ifdef WITH_ISO14443a
 		case CMD_SNOOP_ISO_14443a:
@@ -1287,7 +1375,7 @@ void UsbPacketReceived(uint8_t *packet, int len)
 			for(size_t i=0; i<c->arg[1]; i += USB_CMD_DATA_SIZE) {
 				size_t len = MIN((c->arg[1] - i),USB_CMD_DATA_SIZE);
 				cmd_send(CMD_DOWNLOADED_RAW_ADC_SAMPLES_125K,i,len,BigBuf_get_traceLen(),BigBuf+c->arg[0]+i,len);
-			}
+            }
 			// Trigger a finish downloading signal with an ACK frame
 			cmd_send(CMD_ACK,1,0,BigBuf_get_traceLen(),getSamplingConfig(),sizeof(sample_config));
 			LED_B_OFF();
@@ -1422,11 +1510,20 @@ void  __attribute__((noreturn)) AppMain(void)
       }
     }
 		WDT_HIT();
-
+#ifdef WITH_EM4
+if (BUTTON_HELD(1000) > 0)
+{
+doSendDPrint=0;
+SatsRun();
+doSendDPrint=1;
+}
+#endif
 #ifdef WITH_LF
 #ifndef WITH_ISO14443a_StandAlone
+#ifndef WITH_EM4
 		if (BUTTON_HELD(1000) > 0)
 			SamyRun();
+#endif            
 #endif
 #endif
 #ifdef WITH_ISO14443a
