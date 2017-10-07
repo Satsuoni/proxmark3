@@ -1204,7 +1204,7 @@ void UsbPacketReceived(uint8_t *packet, int len)
             HfSimLite(c->arg[0],c->arg[1]);            
             break;                 
         case CMD_SNOOP_FLITE:
-            HfSnoopLite(c->arg[0],c->arg[1]);
+            HfSnoopLite(c->arg[0]);
             break;
 #endif
 

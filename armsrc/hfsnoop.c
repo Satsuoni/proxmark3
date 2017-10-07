@@ -275,7 +275,7 @@ static void ProcessNFCByte(uint8_t bt)
 }
 
 
-void HfSnoopLite(int samplesToSkip, int triggersToSkip)
+void HfSnoopLite(int samplesToSkip)
 {
     if(!crc_tabccitt_init)
         init_crcccitt_tab();
@@ -284,7 +284,7 @@ void HfSnoopLite(int samplesToSkip, int triggersToSkip)
     
     int remFrames=samplesToSkip;
     if (remFrames==0) remFrames=50;
-    Dbprintf("Snoop FelicaLiteS: Getting first %d frames, Skipping %d triggers.\n", samplesToSkip, triggersToSkip);
+    Dbprintf("Snoop FelicaLiteS: Getting first %d frames \n", samplesToSkip);
   
     LED_D_ON();
     // Select correct configs

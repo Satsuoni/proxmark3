@@ -136,16 +136,6 @@ hi_sniffer he(
        hi_read_rx_xcorr_848, hi_read_rx_xcorr_snoop, hi_read_rx_xcorr_quarter
 );
 
-//hi_flite hfl(
-//       pck0, ck_1356meg, ck_1356megb,
-//       hfl_pwr_lo, hfl_pwr_hi, hfl_pwr_oe1, hfl_pwr_oe2, hfl_pwr_oe3,       hfl_pwr_oe4,
-//       adc_d, hfl_adc_clk,
-//       hfl_ssp_frame, hfl_ssp_din, ssp_dout, hfl_ssp_clk,
-//       cross_hi, cross_lo,
-//       hfl_dbg,
-//       hi_simulate_mod_type
-      // hi_read_rx_xcorr_848, hi_read_rx_xcorr_snoop, hi_read_rx_xcorr_quarter
-//);
 
 // Major modes:
 
@@ -154,7 +144,7 @@ hi_sniffer he(
 //   010 --  HF simulated tag
 //   011 --  HF ISO14443-A
 //   100 --  HF Snoop
-//   101 --  HF demod test
+//   101 --  
 //   111 --  everything off
 
 mux8 mux_ssp_clk		(major_mode, ssp_clk,   ht_ssp_clk,   hrxc_ssp_clk,   hs_ssp_clk,   hisn_ssp_clk,   he_ssp_clk,   1'b0, 1'b0, 1'b0);

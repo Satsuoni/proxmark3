@@ -109,7 +109,7 @@ void PrintAndLogRaw(char *fmt, ...)
 	if (logging && !logfile) {
 		logfile=fopen("raws.txt", "a");
 		if (!logfile) {
-			fprintf(stderr, "Can't open logfile, logging disabled!\n");
+			fprintf(stderr, "Can't open raws file, logging disabled!\n");
 			logging=0;
 		}
 	}
@@ -133,9 +133,7 @@ void PrintAndLogRaw(char *fmt, ...)
 	va_start(argptr, fmt);
 	va_copy(argptr2, argptr);
 	vprintf(fmt, argptr);
-	//printf("          "); // cleaning prompt
 	va_end(argptr);
-	//printf("\n");
 
 	if (need_hack) {
 		rl_restore_prompt();
@@ -147,9 +145,7 @@ void PrintAndLogRaw(char *fmt, ...)
 	
 	if (logging && logfile) {
 		vfprintf(logfile, fmt, argptr2);
-		//fprintf(logfile,"\n");
 		fflush(logfile);
-        //fclose(logfile);
 	}
 	va_end(argptr2);
 

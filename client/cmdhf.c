@@ -718,7 +718,7 @@ int CmdHFSnoop(const char *Cmd)
 int CmdHFSnoopLite(const char *Cmd)
 {
 	char * pEnd;
-	UsbCommand c = {CMD_SNOOP_FLITE, {strtol(Cmd, &pEnd,0),strtol(pEnd, &pEnd,0),0}};
+	UsbCommand c = {CMD_SNOOP_FLITE, {strtol(Cmd, &pEnd,0),0,0}};
 	SendCommand(&c);
 	return 0;
 }

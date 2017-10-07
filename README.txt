@@ -1,93 +1,32 @@
-NOTICE:
-(2014-03-26)
-This is now the official Proxmark repository!
-
-INTRODUCTION:
-
-The proxmark3 is a powerful general purpose RFID tool, the size of a deck
-of cards, designed to snoop, listen and emulate everything from
-Low Frequency (125kHz) to High Frequency (13.56MHz) tags.
-
-This repository contains enough software, logic (for the FPGA), and design
-documentation for the hardware that you could, at least in theory,
-do something useful with a proxmark3.
-
-RESOURCES:
-
-   * This repository!
-      https://github.com/Proxmark/proxmark3
-      
-   * The Wiki
-      https://github.com/Proxmark/proxmark3/wiki
-      
-   * The GitHub page
-      http://proxmark.github.io/proxmark3/
-      
-   * The Forum
-      http://www.proxmark.org/forum
-      
-   * The IRC chanel
-       irc.freenode.org #proxmark3
-       -or-
-       http://webchat.freenode.net/?channels=#proxmark3
-       
-   * The Homebrew formula repository
-      https://github.com/Proxmark/homebrew-proxmark3
-   
-DEVELOPMENT:
-
-The tools required to build  or run the project will vary depending on
-your operating system. Please refer to the Wiki for details.
-
-   * https://github.com/Proxmark/proxmark3/wiki
-
-OBTAINING HARDWARE:
-
-The Proxmark3 is available for purchase (assembled and tested) from the
-following locations:
-
-   * https://proxmark3.com/  - RyscCorp (us)
-   * http://www.elechouse.com/  - Elechouse (HK)
-   * https://lab401.com/ - Lab401 (FR)
-   * http://www.rfxsecure.com/  - RFxSecure (SG)
-   * http://proxmark3.tictail.com/ - IceSQL (SE)
-   
-Most of the ultra-low-volume contract assemblers could put
-something like this together with a reasonable yield. A run of around
-a dozen units is probably cost-effective. The BOM includes (possibly-
-outdated) component pricing, and everything is available from Digikey
-and the usual distributors.
-
-If you've never assembled a modern circuit board by hand, then this is
-not a good place to start. Some of the components (e.g. the crystals)
-must not be assembled with a soldering iron, and require hot air.
-
-The schematics are included; the component values given are not
-necessarily correct for all situations, but it should be possible to do
-nearly anything you would want with appropriate population options.
-
-The printed circuit board artwork is also available, as Gerbers and an
-Excellon drill file.
+This is a fork of Proxmark for me to try and start implementing ISO/IEC 18092/ NFC Type 3/ Felica 
+(since they all use the same frame structure) 
 
 
-LICENSING:
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+Original repository: https://github.com/Proxmark/proxmark3
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+Introduced changes:
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+  * Added a new FPGA bitstream for 212k Manchester modulation/demodulation and frame detection (snooping or tag simulation only) 
+    (I did try to fit it into HF module, but ran out of FPGA slices)
+  * Fixed a rather aggravating bug in fpga_compress.c, which prevented it from compressing more than two files.
+  * Added 2 new functions to utilize the new bitstream (in hfsnoop.c), and corresponding client functions: 
+    HfSnoopLite - (called as hf slite <frames>) would liten to the NFCIP frames it can recognize and dump them and the timing between frames to BigBuf
+    HfSimLite - (called as hf litesim <BDEF2>) would at the moment only respond to POLL commands of NFCIP with specified NDEF2 in ts0
+     (the names are artefact of the fact that I only had Felica Lite-S to test with)
+  * Assuming that writing tracelen through buffer overflow was a bug, changed optimizedSnoop to set it explicitly
+  * Changed hf list raw function to print a bytedump without table (in python list format), and write the same string to raws.txt file
+  * Fiddled with Makefiles to make the result compile
+  * Added a simple PRNG for use in shuffling cards in standalone mode
+
+Notes: 
+This is a personal hobby project, though I feel it might be of use in the main library. 
+As such, it might not be developed further, since polling command turned out to be enough for my purposes.
+There are many things that can be added:
+ * Reaction to other commands, such as NFC Tag3 Block Read
+ * Support for 414 kbit FeLica tags - only 212 is supported currently
+ * Support for auth and encryption commands
+ * Reader simulation - currently only snooping and primitive tag emulation are supported
+ 
 
 
-Jonathan Westhues
-user jwesthues, at host cq.cx
-
-May 2007, Cambridge MA
