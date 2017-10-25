@@ -42,7 +42,7 @@ always @(ck_1356megb, xcorr_is_848, xcorr_quarter_freq, fc_div)
 		adc_clk <= fc_div[1];
 	else 											// fc = 105.9375 kHz
 		adc_clk <= fc_div[2];
-
+		
 // When we're a reader, we just need to do the BPSK demod; but when we're an
 // eavesdropper, we also need to pick out the commands sent by the reader,
 // using AM. Do this the same way that we do it for the simulated tag.
@@ -88,7 +88,7 @@ reg ssp_frame;
 
 always @(negedge adc_clk)
 begin
-		corr_i_cnt <= corr_i_cnt + 1;
+	corr_i_cnt <= corr_i_cnt + 1;
 end		
 		
 
@@ -101,18 +101,18 @@ begin
     if(corr_i_cnt == 6'd0)
     begin
         if(snoop)
-			begin
+        begin
 			// Send 7 most significant bits of tag signal (signed), plus 1 bit reader signal
             corr_i_out <= {corr_i_accum[11:5], after_hysteresis_prev_prev};
             corr_q_out <= {corr_q_accum[11:5], after_hysteresis_prev};
-				after_hysteresis_prev_prev <= after_hysteresis;
-			end
+			after_hysteresis_prev_prev <= after_hysteresis;
+        end
         else
-			begin
+        begin
             // 8 bits of tag signal
             corr_i_out <= corr_i_accum[11:4];
             corr_q_out <= corr_q_accum[11:4];
-			end
+        end
 
         corr_i_accum <= adc_d;
         corr_q_accum <= adc_d;
